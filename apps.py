@@ -9,9 +9,6 @@ import json
 DEVICE = "cpu"
 
 
-# ---------------------------
-#  Model Definition
-# ---------------------------
 class ThreeHeadResNet(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
@@ -48,16 +45,12 @@ class ThreeHeadResNet(nn.Module):
         mac_out = self.mac_head(f)
         return cls_out, cal_out, mac_out
 
-
-# ---------------------------
-# Load Model + Assets
-# ---------------------------
 @st.cache_resource
 def load_model():
     NUM_CLASSES = 10
 
     model = ThreeHeadResNet(num_classes=NUM_CLASSES).to(DEVICE)
-    ckpt = torch.load("model_weights.pth", map_location=DEVICE) 
+    ckpt = torch.load("artifacts/model_weights.pth", map_location=DEVICE) 
 
     model.load_state_dict(ckpt)
     model.eval()
@@ -66,14 +59,14 @@ def load_model():
 
 @st.cache_resource
 def load_scalers():
-    with open("scalers.pkl", "rb") as f:
+    with open("artifacts/scalers.pkl", "rb") as f:
         s = pickle.load(f)
     return s
 
 
 @st.cache_resource
 def load_transforms():
-    with open("transforms.json", "r") as f:
+    with open("artifacts/transforms.json", "r") as f:
         cfg = json.load(f)
 
     tf = transforms.Compose([
@@ -98,10 +91,6 @@ def load_class_labels():
         'Vegetable Plate', 'Pasta'
     ]
 
-
-# ---------------------------
-# Prediction Function
-# ---------------------------
 def predict(img, model, tf, scalers, class_labels):
 
     x = tf(img).unsqueeze(0).to(DEVICE)
@@ -118,9 +107,6 @@ def predict(img, model, tf, scalers, class_labels):
     return cal, mac, pred_class
 
 
-# ---------------------------
-# Streamlit UI
-# ---------------------------
 st.title("🍲 Calorie + Macronutrient Estimator (ResNet50)")
 
 uploaded = st.file_uploader("Upload meal image", type=["jpg", "jpeg", "png"])
